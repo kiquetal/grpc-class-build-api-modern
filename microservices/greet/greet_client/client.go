@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	"grpc/learning/greet/greetpb"
 	"log"
 )
@@ -12,7 +13,8 @@ func main() {
 
 	fmt.Printf("I'm a client\n")
 
-	conn, err := grpc.Dial("localhost:50051", grpc.WithInsecure())
+	conn, err := grpc.Dial("localhost:50051", grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithBlock())
 	if err != nil {
 		log.Fatalf("Could not connect: %v", err)
 	}
