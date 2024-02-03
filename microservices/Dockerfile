@@ -12,4 +12,3 @@ FROM scratch as min
 COPY --from=dev /app/server /app/server
 CMD ["/app/server"]
 EXPOSE 50051
-
