@@ -29,8 +29,8 @@ func doUnary(c greetpb.GreetServiceClient) {
 
 	res, err := c.Greet(context.Background(), &greetpb.GreetRequest{
 		Greeting: &greetpb.Greeting{
-			FirstName: "Ricardo",
-			LastName:  "Melo",
+			FirstName: "Sunholiday",
+			LastName:  "Sun",
 		},
 	})
 
