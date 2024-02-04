@@ -34,6 +34,6 @@ func doUnary(c calculatorpb.CalculatorServiceClient) {
 	if err != nil {
 		fmt.Printf("Error while calling Greet RPC: %v", err)
 	}
-	fmt.Printf("Response from Greet: %v", res.SumResult)
+	fmt.Printf("Response from Calculator: %v", res.SumResult)
 
 }

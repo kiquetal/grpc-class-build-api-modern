@@ -27,6 +27,21 @@ func (s *server) Greet(ctx context.Context, req *greetpb.GreetRequest) (*greetpb
 	return res, nil
 }
 
+func (s *server) ManyTimesGreet(req *greetpb.ManyGreetRequest, stream greetpb.GreetService_ManyTimesGreetServer) error {
+	fmt.Printf("ManyTimesGreet function was invoked with %v\n", req)
+	firstName := req.GetGreeting().GetFirstName()
+	lastName := req.GetGreeting().GetLastName()
+	for i := 0; i < 10; i++ {
+		result := "Hello " + firstName + " number " + fmt.Sprint(i) + " " + lastName
+		res := &greetpb.ManyGreetResponse{
+			Result: result,
+		}
+		stream.Send(res)
+		time.Sleep(1000 * time.Millisecond)
+	}
+	return nil
+}
+
 func main() {
 
 	// create listener on port 50051
