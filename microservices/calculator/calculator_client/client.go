@@ -43,7 +43,7 @@ func doUnary(c calculatorpb.CalculatorServiceClient) {
 func doStreamDecomposition(c calculatorpb.CalculatorServiceClient) {
 	fmt.Printf("Starting to do a PrimeNumberDecomposition RPC...\n")
 	req := &calculatorpb.PrimeNumberDecompositionRequest{
-		Number: 120,
+		Number: 155455664,
 	}
 	resStream, err := c.PrimeNumberDecomposition(context.Background(), req)
 	if err != nil {
