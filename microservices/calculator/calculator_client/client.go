@@ -21,7 +21,31 @@ func main() {
 	defer cc.Close()
 	c := calculatorpb.NewCalculatorServiceClient(cc)
 	//	doUnary(c)
-	doStreamDecomposition(c)
+	//	doStreamDecomposition(c)
+	doClientStream(c)
+
+}
+
+func doClientStream(c calculatorpb.CalculatorServiceClient) {
+
+	fmt.Printf("Starting to do a Client Streaming RPC...\n")
+	stream, err := c.ComputeAverage(context.Background())
+	if err != nil {
+		fmt.Printf("Error while calling")
+
+	}
+	numbers := []int32{3, 5, 9, 54, 23}
+	for _, number := range numbers {
+		fmt.Printf("Sending number: %v\n", number)
+		stream.Send(&calculatorpb.ComputeAverageRequest{
+			Number: number,
+		})
+	}
+	res, err := stream.CloseAndRecv()
+	if err != nil {
+		fmt.Printf("Error while receiving response from ComputeAverage: %v", err)
+	}
+	fmt.Printf("The Average is: %v\n", res.GetAverage())
 
 }
 
