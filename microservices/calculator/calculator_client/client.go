@@ -23,6 +23,7 @@ func main() {
 	//	doUnary(c)
 	//	doStreamDecomposition(c)
 	doClientStream(c)
+	//	doBiDiStreaming(c)
 
 }
 

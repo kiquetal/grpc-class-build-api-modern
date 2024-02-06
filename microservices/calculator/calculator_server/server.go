@@ -70,6 +70,7 @@ func (s *server) ComputeAverage(stream calculatorpb.CalculatorService_ComputeAve
 
 	return nil
 }
+
 func main() {
 	fmt.Printf("Calculator Server\n")
 	lis, err := net.Listen("tcp", "0.0.0.0:50052")
