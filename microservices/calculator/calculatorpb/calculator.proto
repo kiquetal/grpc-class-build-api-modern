@@ -30,9 +30,25 @@ message ComputeAverageResponse {
   int64 average = 1;
 }
 
+message Greeting {
+  string first_name = 1;
+  string last_name = 2;
+}
+
+message GreetEveryoneRequest {
+
+  Greeting greeting = 1;
+
+}
+
+message GreetEveryoneResponse {
+  string result = 1;
+}
+
 service CalculatorService {
   rpc Sum(SumRequest) returns (SumResponse) {};
   rpc PrimeNumberDecomposition(PrimeNumberDecompositionRequest) returns (stream PrimeNumberDecompositionResponse) {};
   rpc ComputeAverage(stream ComputeAverageRequest) returns (ComputeAverageResponse) {};
+  rpc GreetEveryone(stream GreetEveryoneRequest) returns (stream GreetEveryoneResponse) {};
 }
 

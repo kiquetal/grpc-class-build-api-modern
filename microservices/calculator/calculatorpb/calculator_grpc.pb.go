@@ -25,6 +25,7 @@ type CalculatorServiceClient interface {
 	Sum(ctx context.Context, in *SumRequest, opts ...grpc.CallOption) (*SumResponse, error)
 	PrimeNumberDecomposition(ctx context.Context, in *PrimeNumberDecompositionRequest, opts ...grpc.CallOption) (CalculatorService_PrimeNumberDecompositionClient, error)
 	ComputeAverage(ctx context.Context, opts ...grpc.CallOption) (CalculatorService_ComputeAverageClient, error)
+	GreetEveryone(ctx context.Context, opts ...grpc.CallOption) (CalculatorService_GreetEveryoneClient, error)
 }
 
 type calculatorServiceClient struct {
@@ -110,6 +111,37 @@ func (x *calculatorServiceComputeAverageClient) CloseAndRecv() (*ComputeAverageR
 	return m, nil
 }
 
+func (c *calculatorServiceClient) GreetEveryone(ctx context.Context, opts ...grpc.CallOption) (CalculatorService_GreetEveryoneClient, error) {
+	stream, err := c.cc.NewStream(ctx, &CalculatorService_ServiceDesc.Streams[2], "/calculatorpb.CalculatorService/GreetEveryone", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &calculatorServiceGreetEveryoneClient{stream}
+	return x, nil
+}
+
+type CalculatorService_GreetEveryoneClient interface {
+	Send(*GreetEveryoneRequest) error
+	Recv() (*GreetEveryoneResponse, error)
+	grpc.ClientStream
+}
+
+type calculatorServiceGreetEveryoneClient struct {
+	grpc.ClientStream
+}
+
+func (x *calculatorServiceGreetEveryoneClient) Send(m *GreetEveryoneRequest) error {
+	return x.ClientStream.SendMsg(m)
+}
+
+func (x *calculatorServiceGreetEveryoneClient) Recv() (*GreetEveryoneResponse, error) {
+	m := new(GreetEveryoneResponse)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // CalculatorServiceServer is the server API for CalculatorService service.
 // All implementations must embed UnimplementedCalculatorServiceServer
 // for forward compatibility
@@ -117,6 +149,7 @@ type CalculatorServiceServer interface {
 	Sum(context.Context, *SumRequest) (*SumResponse, error)
 	PrimeNumberDecomposition(*PrimeNumberDecompositionRequest, CalculatorService_PrimeNumberDecompositionServer) error
 	ComputeAverage(CalculatorService_ComputeAverageServer) error
+	GreetEveryone(CalculatorService_GreetEveryoneServer) error
 	mustEmbedUnimplementedCalculatorServiceServer()
 }
 
@@ -132,6 +165,9 @@ func (UnimplementedCalculatorServiceServer) PrimeNumberDecomposition(*PrimeNumbe
 }
 func (UnimplementedCalculatorServiceServer) ComputeAverage(CalculatorService_ComputeAverageServer) error {
 	return status.Errorf(codes.Unimplemented, "method ComputeAverage not implemented")
+}
+func (UnimplementedCalculatorServiceServer) GreetEveryone(CalculatorService_GreetEveryoneServer) error {
+	return status.Errorf(codes.Unimplemented, "method GreetEveryone not implemented")
 }
 func (UnimplementedCalculatorServiceServer) mustEmbedUnimplementedCalculatorServiceServer() {}
 
@@ -211,6 +247,32 @@ func (x *calculatorServiceComputeAverageServer) Recv() (*ComputeAverageRequest, 
 	return m, nil
 }
 
+func _CalculatorService_GreetEveryone_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(CalculatorServiceServer).GreetEveryone(&calculatorServiceGreetEveryoneServer{stream})
+}
+
+type CalculatorService_GreetEveryoneServer interface {
+	Send(*GreetEveryoneResponse) error
+	Recv() (*GreetEveryoneRequest, error)
+	grpc.ServerStream
+}
+
+type calculatorServiceGreetEveryoneServer struct {
+	grpc.ServerStream
+}
+
+func (x *calculatorServiceGreetEveryoneServer) Send(m *GreetEveryoneResponse) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func (x *calculatorServiceGreetEveryoneServer) Recv() (*GreetEveryoneRequest, error) {
+	m := new(GreetEveryoneRequest)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // CalculatorService_ServiceDesc is the grpc.ServiceDesc for CalculatorService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -232,6 +294,12 @@ var CalculatorService_ServiceDesc = grpc.ServiceDesc{
 		{
 			StreamName:    "ComputeAverage",
 			Handler:       _CalculatorService_ComputeAverage_Handler,
+			ClientStreams: true,
+		},
+		{
+			StreamName:    "GreetEveryone",
+			Handler:       _CalculatorService_GreetEveryone_Handler,
+			ServerStreams: true,
 			ClientStreams: true,
 		},
 	},
