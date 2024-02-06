@@ -7,6 +7,7 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	"grpc/learning/calculator/calculatorpb"
 	"io"
+	"time"
 )
 
 func main() {
@@ -22,9 +23,67 @@ func main() {
 	c := calculatorpb.NewCalculatorServiceClient(cc)
 	//	doUnary(c)
 	//	doStreamDecomposition(c)
-	doClientStream(c)
-	//	doBiDiStreaming(c)
+	//doClientStream(c)
+	doBiDiStreaming(c)
 
+}
+
+func doBiDiStreaming(c calculatorpb.CalculatorServiceClient) {
+	fmt.Printf("Starting to do a BiDi Streaming RPC...\n")
+	// we create a stream by invoking the client
+	requests := []*calculatorpb.FindMaximumRequest{
+		&calculatorpb.FindMaximumRequest{
+			Number: 4,
+		},
+		&calculatorpb.FindMaximumRequest{
+			Number: 3,
+		},
+		&calculatorpb.FindMaximumRequest{
+			Number: 5,
+		},
+		&calculatorpb.FindMaximumRequest{
+			Number: 1,
+		},
+		&calculatorpb.FindMaximumRequest{
+			Number: 6,
+		},
+	}
+	waitc := make(chan struct{})
+	stream, err := c.FindMaximum(context.Background())
+	if err != nil {
+		fmt.Printf("Error while creating stream: %v", err)
+		return
+	}
+	go func() {
+		// function to send a bunch of messages
+		for _, req := range requests {
+			fmt.Printf("Sending request: %v\n", req)
+			stream.Send(req)
+			time.Sleep(1000 * time.Millisecond)
+		}
+		stream.CloseSend()
+
+	}()
+
+	go func() {
+		for {
+			// read
+			res, err := stream.Recv()
+			if err == io.EOF {
+				break
+			}
+			if err != nil {
+				fmt.Printf("Error while receiving: %v", err)
+				break
+			}
+			fmt.Printf("Received: %v\n", res.GetMaximum())
+
+		}
+		close(waitc)
+
+	}()
+
+	<-waitc
 }
 
 func doClientStream(c calculatorpb.CalculatorServiceClient) {
