@@ -4,7 +4,9 @@ import (
 	"context"
 	"fmt"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/status"
 	"grpc/learning/calculator/calculatorpb"
 	"io"
 	"time"
@@ -24,7 +26,55 @@ func main() {
 	//	doUnary(c)
 	//	doStreamDecomposition(c)
 	//doClientStream(c)
-	doBiDiStreaming(c)
+	//	doBiDiStreaming(c)
+
+	doUnaryError(c)
+
+}
+
+func doUnaryError(c calculatorpb.CalculatorServiceClient) {
+
+	fmt.Printf("Starting to do a Unary RPC...\n")
+
+	// correct call
+	res, err := c.SquareRoot(context.Background(), &calculatorpb.SquareRootRequest{
+		Number: 10,
+	})
+	if err != nil {
+		respErr, ok := status.FromError(err)
+		if ok {
+			// actual error from gRPC user
+			fmt.Println(respErr.Message())
+			fmt.Println(respErr.Code())
+			if respErr.Code() == codes.InvalidArgument {
+				fmt.Println("We probably sent a negative number!")
+				return
+			}
+		} else {
+			fmt.Printf("Big Error calling SquareRoot: %v", err)
+			return
+		}
+	}
+	fmt.Printf("Result of square root of 10: %v\n", res.GetNumberRoot())
+	// error call
+	res, err = c.SquareRoot(context.Background(), &calculatorpb.SquareRootRequest{
+		Number: -10,
+	})
+	if err != nil {
+		respErr, ok := status.FromError(err)
+		if ok {
+			// actual error from gRPC user
+			fmt.Println(respErr.Message())
+			fmt.Println(respErr.Code())
+			if respErr.Code() == codes.InvalidArgument {
+				fmt.Println("We probably sent a negative number!")
+				return
+			}
+		} else {
+			fmt.Printf("Big Error calling SquareRoot: %v", err)
+			return
+		}
+	}
 
 }
 
@@ -39,7 +89,7 @@ func doBiDiStreaming(c calculatorpb.CalculatorServiceClient) {
 			Number: 3,
 		},
 		&calculatorpb.FindMaximumRequest{
-			Number: 5,
+			Number: 3,
 		},
 		&calculatorpb.FindMaximumRequest{
 			Number: 1,
