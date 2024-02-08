@@ -1,11 +1,12 @@
 package main
 import "fmt"
 func countdown(n int) <-chan int {
-    ch := make(chan int)
+    ch := make(chan int,1)
     go func() {
         defer close(ch)
         for i := n; i > 0; i-- {
-            ch <- i
+	    fmt.Println("go for caller")
+	    ch <- i 
         }
     }()
     return ch
