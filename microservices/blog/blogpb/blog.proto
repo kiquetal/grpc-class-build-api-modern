@@ -14,7 +14,7 @@ message CreateBlogRequest {
 }
 
 message CreateBlogResponse {
-    Blog blog = 1;
+    Blog blog = 1;  // will have blog id
 }
 
 message ReadBlogRequest {

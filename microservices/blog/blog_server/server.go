@@ -2,7 +2,10 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"google.golang.org/grpc"
@@ -17,19 +20,80 @@ type server struct {
 	blogpb.UnimplementedBlogServiceServer
 }
 
+func (s *server) CreateBlog(ctx context.Context, req *blogpb.CreateBlogRequest) (*blogpb.CreateBlogResponse, error) {
+
+	requestBlog := req.GetBlog()
+	if requestBlog == nil {
+		return nil, fmt.Errorf("Request Blog is empty")
+	}
+	data := blogItem{
+		AuthorID: requestBlog.GetAuthorId(),
+		Content:  requestBlog.GetContent(),
+		Title:    requestBlog.GetTitle(),
+	}
+
+	// check if the data already exists
+
+	var filter = bson.M{"author_id": data.AuthorID}
+	fmt.Println("Filter: ", filter)
+	var data2 blogItem
+	resultFind := collection.FindOne(context.Background(), filter).Decode(&data2)
+	fmt.Println("Data2: ", data2)
+	fmt.Println("ResultFind: ", resultFind)
+	if resultFind != nil {
+		if errors.Is(resultFind, mongo.ErrNoDocuments) {
+			fmt.Println("No Data Found")
+		} else {
+			return nil, fmt.Errorf("Error finding blog: %v", resultFind)
+
+		}
+
+	}
+	if data2 != (blogItem{}) {
+		return nil, errors.New("Blog already exists")
+
+	}
+	// insert the data
+	result, err := collection.InsertOne(context.Background(), data)
+
+	if err != nil {
+		return nil, fmt.Errorf("Error inserting blog: %v", err)
+	}
+	oid, ok := result.InsertedID.(primitive.ObjectID)
+	if !ok {
+		return nil, fmt.Errorf("Error converting to OID")
+	}
+	return &blogpb.CreateBlogResponse{
+		Blog: &blogpb.Blog{
+			Id:       oid.String(),
+			AuthorId: data.AuthorID,
+			Content:  data.Content,
+			Title:    data.Title,
+		},
+	}, nil
+
+}
+
 var collection *mongo.Collection
+
+type blogItem struct {
+	ID       string `bson:"_id,omitempty"`
+	AuthorID string `bson:"author_id"`
+	Content  string `bson:"content"`
+	Title    string `bson:"title"`
+}
 
 func main() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 	fmt.Printf("Blog Service Started\n")
 
-	var options = options.Client().ApplyURI("mongodb://localhost:27017").SetAuth(options.Credential{
+	var optionsO = options.Client().ApplyURI("mongodb://localhost:27017").SetAuth(options.Credential{
 		Username:      "mydbadmin",
 		Password:      "admin",
 		AuthSource:    "mydb",
 		AuthMechanism: "SCRAM-SHA-256",
 	})
-	client, err := mongo.Connect(context.Background(), options)
+	client, err := mongo.Connect(context.Background(), optionsO)
 	if err != nil {
 		log.Fatalf("Error creating mongo client: %v", err)
 	}
@@ -50,7 +114,7 @@ func main() {
 		log.Fatalf("Failed to listen: %v", err)
 	}
 
-	opts := []grpc.ServerOption{}
+	var opts []grpc.ServerOption
 	s := grpc.NewServer(opts...)
 	blogpb.RegisterBlogServiceServer(s, &server{})
 
@@ -68,8 +132,16 @@ func main() {
 	<-ch
 
 	fmt.Println("Stopping the server")
-	lis.Close()
+	err = lis.Close()
+	if err != nil {
+		return
+	}
 	fmt.Println("Closing the listener")
 	s.Stop()
-	fmt.Println("Stopping the server")
+	fmt.Println("Client Disconnected")
+	err = client.Disconnect(context.Background())
+	if err != nil {
+		return
+	}
+	fmt.Println("MongoDB Disconnected")
 }
