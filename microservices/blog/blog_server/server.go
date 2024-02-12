@@ -133,6 +133,30 @@ func (s *server) UpdateBlog(ctx context.Context, req *blogpb.UpdateBlogRequest) 
 	}, nil
 }
 
+func (s *server) DeleteBlog(ctx context.Context, req *blogpb.ReadBlogRequest) (*blogpb.DeleteBlogResponse, error) {
+	fmt.Println("Delete Blog Request")
+	blogID := req.GetBlogId()
+	oid, err := primitive.ObjectIDFromHex(blogID)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument,
+			fmt.Sprintf("Invalid request %v", err))
+	}
+	filter := bson.M{"_id": oid}
+	result, err := collection.DeleteOne(context.Background(), filter)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal,
+			fmt.Sprintf("Internal error %v", err))
+
+	}
+	if result.DeletedCount == 0 {
+		return nil, status.Errorf(codes.NotFound,
+			fmt.Sprintf("Blog with ID %v not found", blogID))
+
+	}
+	return &blogpb.DeleteBlogResponse{BlogId: blogID}, nil
+
+}
+
 var collection *mongo.Collection
 
 type blogItem struct {

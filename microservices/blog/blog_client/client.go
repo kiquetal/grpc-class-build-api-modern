@@ -22,7 +22,31 @@ func main() {
 
 	c := blogpb.NewBlogServiceClient(client)
 	//insertBlog(c)
-	readBlog(c)
+	//readBlog(c)
+	//updateBlog(c)
+	deleteBlog(c)
+}
+
+func deleteBlog(c blogpb.BlogServiceClient) {
+	fmt.Println("Starting to do a Unary RPC...")
+	req := &blogpb.ReadBlogRequest{
+		BlogId: "65c907a3da60194db6d6fbc1",
+	}
+	res, err := c.DeleteBlog(context.Background(), req)
+	if err != nil {
+		co := status.Code(err)
+
+		if co == codes.NotFound {
+			fmt.Printf("Blog not found")
+			return
+		}
+
+		fmt.Printf("Error while calling DeleteBlog RPC: %v", err)
+		return
+
+	}
+	fmt.Printf("The blog is %v", res)
+
 }
 
 func readBlog(c blogpb.BlogServiceClient) {
