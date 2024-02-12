@@ -99,6 +99,40 @@ func (s *server) ReadBlog(ctx context.Context, req *blogpb.ReadBlogRequest) (*bl
 	}, nil
 }
 
+func (s *server) UpdateBlog(ctx context.Context, req *blogpb.UpdateBlogRequest) (*blogpb.UpdateBlogResponse, error) {
+	blog := req.GetBlog()
+	if blog == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "Blog is empty")
+	}
+	oid, err := primitive.ObjectIDFromHex(blog.GetId())
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "Error converting to OID: %v", err)
+	}
+	filter := bson.M{"_id": oid}
+	update := bson.M{"$set": bson.M{"author_id": blog.GetAuthorId(), "content": blog.GetContent(), "title": blog.GetTitle()}}
+	after := options.After
+	opt := options.FindOneAndUpdateOptions{
+		ReturnDocument: &after,
+	}
+	var updatedDocument blogItem
+	result := collection.FindOneAndUpdate(context.Background(), filter, update, &opt).Decode(&updatedDocument)
+	if result != nil {
+		if errors.Is(result, mongo.ErrNoDocuments) {
+			return nil, status.Errorf(codes.NotFound, "Blog with ID %v not found", blog.GetId())
+		} else {
+			return nil, fmt.Errorf("Error updating blog: %v", result)
+		}
+	}
+	return &blogpb.UpdateBlogResponse{
+		Blog: &blogpb.Blog{
+			Id:       updatedDocument.ID,
+			AuthorId: updatedDocument.AuthorID,
+			Content:  updatedDocument.Content,
+			Title:    updatedDocument.Title,
+		},
+	}, nil
+}
+
 var collection *mongo.Collection
 
 type blogItem struct {
