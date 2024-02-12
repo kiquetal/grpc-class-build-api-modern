@@ -9,6 +9,8 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"grpc/learning/blog/blogpb"
 	"log"
 	"net"
@@ -71,6 +73,30 @@ func (s *server) CreateBlog(ctx context.Context, req *blogpb.CreateBlogRequest) 
 		},
 	}, nil
 
+}
+
+func (s *server) ReadBlog(ctx context.Context, req *blogpb.ReadBlogRequest) (*blogpb.Blog, error) {
+	blogID := req.GetBlogId()
+	oid, err := primitive.ObjectIDFromHex(blogID)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "Error converting to OID: %v", err)
+	}
+	filter := bson.M{"_id": oid}
+	var data blogItem
+	result := collection.FindOne(context.Background(), filter).Decode(&data)
+	if result != nil {
+		if errors.Is(result, mongo.ErrNoDocuments) {
+			return nil, status.Errorf(codes.NotFound, "Blog with ID %v not found", blogID)
+		} else {
+			return nil, fmt.Errorf("error finding blog: %v", result)
+		}
+	}
+	return &blogpb.Blog{
+		Id:       data.ID,
+		AuthorId: data.AuthorID,
+		Content:  data.Content,
+		Title:    data.Title,
+	}, nil
 }
 
 var collection *mongo.Collection

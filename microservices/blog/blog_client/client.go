@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"grpc/learning/blog/blogpb"
 )
 
@@ -19,7 +21,31 @@ func main() {
 	defer client.Close()
 
 	c := blogpb.NewBlogServiceClient(client)
-	insertBlog(c)
+	//insertBlog(c)
+	readBlog(c)
+}
+
+func readBlog(c blogpb.BlogServiceClient) {
+
+	fmt.Println("Starting to do a Unary RPC...")
+	req := &blogpb.ReadBlogRequest{
+		BlogId: "65c907a3da60194db6d6fbc2",
+	}
+	res, err := c.ReadBlog(context.Background(), req)
+	if err != nil {
+
+		co := status.Code(err)
+
+		if co == codes.NotFound {
+			fmt.Printf("Blog not found")
+			return
+		}
+
+		fmt.Printf("Error while calling ReadBlog RPC: %v", err)
+		return
+	}
+
+	fmt.Printf("The blog is %v", res)
 }
 
 func insertBlog(c blogpb.BlogServiceClient) {
