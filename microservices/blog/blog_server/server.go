@@ -38,8 +38,7 @@ func (s *server) CreateBlog(ctx context.Context, req *blogpb.CreateBlogRequest) 
 	fmt.Println("Filter: ", filter)
 	var data2 blogItem
 	resultFind := collection.FindOne(context.Background(), filter).Decode(&data2)
-	fmt.Println("Data2: ", data2)
-	fmt.Println("ResultFind: ", resultFind)
+
 	if resultFind != nil {
 		if errors.Is(resultFind, mongo.ErrNoDocuments) {
 			fmt.Println("No Data Found")
