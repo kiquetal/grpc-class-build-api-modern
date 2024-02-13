@@ -7,6 +7,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"grpc/learning/blog/blogpb"
+	"io"
 )
 
 func main() {
@@ -21,10 +22,43 @@ func main() {
 	defer client.Close()
 
 	c := blogpb.NewBlogServiceClient(client)
-	//	insertBlog(c)
+	/*	insertBlog(c, &blogpb.Blog{
+			AuthorId: "JR.Tolkien",
+			Title:    "Lord of the Rings",
+			Content:  "Here's Johnny!"})
+		insertBlog(c,
+			&blogpb.Blog{
+				AuthorId: "Stephen King2",
+				Title:    "The Shining",
+				Content:  "Here's Johnny!"})
+	*/
 	//readBlog(c)
 	//updateBlog(c)
-	deleteBlog(c)
+	//deleteBlog(c)
+	listBlog(c)
+}
+
+func listBlog(c blogpb.BlogServiceClient) {
+	fmt.Println("Starting to do a Unary RPC...")
+	req := &blogpb.ListBlogRequest{}
+	res, err := c.ListBlog(context.Background(), req)
+	if err != nil {
+		fmt.Printf("Error while calling ListBlog RPC: %v", err)
+		return
+	}
+	for {
+		msg, err := res.Recv()
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+
+			fmt.Printf("Error while reading stream: %v", err)
+			break
+		}
+		fmt.Println("Blog found: %v", msg)
+	}
+
 }
 
 func deleteBlog(c blogpb.BlogServiceClient) {
@@ -72,15 +106,12 @@ func readBlog(c blogpb.BlogServiceClient) {
 	fmt.Printf("The blog is %v", res)
 }
 
-func insertBlog(c blogpb.BlogServiceClient) {
+func insertBlog(c blogpb.BlogServiceClient, blog *blogpb.Blog) {
 	fmt.Println("Starting to do a Unary RPC...")
 	req := &blogpb.CreateBlogRequest{
-		Blog: &blogpb.Blog{
-			AuthorId: "Stephen King",
-			Title:    "The Shining",
-			Content:  "Here's Johnny!",
-		},
+		Blog: blog,
 	}
+
 	res, err := c.CreateBlog(context.Background(), req)
 	if err != nil {
 		fmt.Printf("Error while calling CreateBlog RPC: %v", err)
