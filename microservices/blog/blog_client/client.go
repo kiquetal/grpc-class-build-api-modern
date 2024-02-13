@@ -21,7 +21,7 @@ func main() {
 	defer client.Close()
 
 	c := blogpb.NewBlogServiceClient(client)
-	//insertBlog(c)
+	//	insertBlog(c)
 	//readBlog(c)
 	//updateBlog(c)
 	deleteBlog(c)
@@ -30,7 +30,7 @@ func main() {
 func deleteBlog(c blogpb.BlogServiceClient) {
 	fmt.Println("Starting to do a Unary RPC...")
 	req := &blogpb.ReadBlogRequest{
-		BlogId: "65c907a3da60194db6d6fbc1",
+		BlogId: "65c907a3da60194db6d6fbc2",
 	}
 	res, err := c.DeleteBlog(context.Background(), req)
 	if err != nil {
@@ -45,7 +45,7 @@ func deleteBlog(c blogpb.BlogServiceClient) {
 		return
 
 	}
-	fmt.Printf("The blog is %v", res)
+	fmt.Printf("Deleted blog with Id: %v", res)
 
 }
 

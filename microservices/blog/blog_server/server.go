@@ -149,12 +149,45 @@ func (s *server) DeleteBlog(ctx context.Context, req *blogpb.ReadBlogRequest) (*
 
 	}
 	if result.DeletedCount == 0 {
+		log.Printf("Blog with ID %v not found", blogID)
 		return nil, status.Errorf(codes.NotFound,
 			fmt.Sprintf("Blog with ID %v not found", blogID))
 
 	}
 	return &blogpb.DeleteBlogResponse{BlogId: blogID}, nil
 
+}
+
+func (s *server) ListBlog(req *blogpb.ListBlogRequest, stream blogpb.BlogService_ListBlogServer) error {
+	fmt.Println("List Blog Request")
+	cursor, err := collection.Find(context.Background(), bson.D{})
+	if err != nil {
+		return status.Errorf(codes.NotFound,
+			fmt.Sprintf("Internal error %v", err))
+	}
+	defer cursor.Close(context.Background())
+	for cursor.Next(context.Background()) {
+		blogItem := &blogItem{}
+		err := cursor.Decode(blogItem)
+		if err != nil {
+			return status.Errorf(codes.InvalidArgument,
+				fmt.Sprintf("Cant decode object"))
+
+		}
+		stream.Send(&blogpb.Blog{
+			Id:       blogItem.ID,
+			AuthorId: blogItem.AuthorID,
+			Content:  blogItem.Content,
+			Title:    blogItem.Title,
+		})
+	}
+	if err := cursor.Err(); err != nil {
+		return status.Errorf(codes.Internal,
+			fmt.Sprintf("Internal error %v", err))
+
+	}
+
+	return nil
 }
 
 var collection *mongo.Collection
