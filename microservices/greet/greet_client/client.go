@@ -24,12 +24,12 @@ func main() {
 	}
 	defer conn.Close()
 	c := greetpb.NewGreetServiceClient(conn)
-	//	doUnary(c)
+		doUnary(c)
 	//	doStream(c)
 	//	doClientStreaming(c)
 	//doBiDiStreaming(c)
-	doUnaryWithDeadline(c, 4*time.Second)
-	doUnaryWithDeadline(c, 8*time.Second)
+	//doUnaryWithDeadline(c, 4*time.Second)
+	//doUnaryWithDeadline(c, 8*time.Second)
 }
 
 func doUnaryWithDeadline(c greetpb.GreetServiceClient, timeout time.Duration) {
